@@ -185,6 +185,7 @@ Remix is used for the **visual demo** (compile → deploy on Remix VM → call `
 
 | Document | What's inside |
 |---|---|
+| [docs/DEVELOPER_GUIDE.md](docs/DEVELOPER_GUIDE.md) | Beginner walkthrough of the whole codebase, function by function |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Component + sequence diagrams (Mermaid, also as SVG/PNG in `docs/images/`) |
 | [docs/REPORT.md](docs/REPORT.md) | College project report |
 | [docs/VIVA.md](docs/VIVA.md) | Viva questions and answers |
