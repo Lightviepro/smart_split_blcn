@@ -5,10 +5,6 @@ export const MAX_RECIPIENTS = 20
 
 export type Result<T> = { ok: true; value: T } | { ok: false; error: string }
 
-/**
- * Parse an ETH amount typed by the user into wei (bigint), using ethers.parseEther only.
- * Rejects: empty, negative, scientific notation, more than 18 decimals, anything non-numeric.
- */
 export function parseEthAmount(input: string, { allowZero = false } = {}): Result<bigint> {
   const text = input.trim()
   if (text === '') return { ok: false, error: 'Enter an amount' }
@@ -26,16 +22,13 @@ export function parseEthAmount(input: string, { allowZero = false } = {}): Resul
 }
 
 export interface AddressContext {
-  /** The SmartSplit contract address on the current chain (cannot be a recipient). */
   contractAddress?: string | null
-  /** The connected wallet (cannot pay itself). */
   senderAddress?: string | null
 }
 
 const sameAddress = (a?: string | null, b?: string | null) =>
   !!a && !!b && a.toLowerCase() === b.toLowerCase()
 
-/** Validate one recipient address. Returns the checksummed address on success. */
 export function validateAddress(input: string, ctx: AddressContext = {}): Result<string> {
   const text = input.trim()
   if (text === '') return { ok: false, error: 'Enter an address' }
@@ -45,8 +38,6 @@ export function validateAddress(input: string, ctx: AddressContext = {}): Result
 
   let checksummed: string
   try {
-    // getAddress accepts all-lowercase / all-uppercase, and REJECTS mixed case whose
-    // EIP-55 checksum is wrong — that usually means a typo in a copied address.
     checksummed = getAddress(text)
   } catch {
     return { ok: false, error: 'Checksum mismatch — this address has a typo (check upper/lower case letters)' }
@@ -58,45 +49,33 @@ export function validateAddress(input: string, ctx: AddressContext = {}): Result
   return { ok: true, value: checksummed }
 }
 
-// ---------------------------------------------------------------------------
-// Whole-form validation
-// ---------------------------------------------------------------------------
-
 export type SplitMode = 'custom' | 'equal'
 
 export interface RecipientRow {
   id: string
   address: string
-  /** Local-only nickname, never sent on-chain. */
   label: string
-  /** Used in custom mode only. */
   amount: string
 }
 
 export interface FormInput {
   mode: SplitMode
   rows: RecipientRow[]
-  /** Used in equal mode only. */
   equalTotal: string
 }
 
 export interface RowValidation {
   addressError?: string
   amountError?: string
-  /** Checksummed address when valid. */
   address?: string
-  /** Wei amount (typed in custom mode, computed in equal mode). */
   amount?: bigint
 }
 
 export interface FormValidation {
   rows: RowValidation[]
-  /** Error for the "total" field in equal mode. */
   totalError?: string
-  /** Errors not tied to a single field. */
   formErrors: string[]
   isValid: boolean
-  /** Ready-to-send arrays (only meaningful when isValid). */
   recipients: string[]
   amounts: bigint[]
   total: bigint
@@ -113,7 +92,6 @@ export function validateForm(input: FormInput, ctx: AddressContext = {}): FormVa
     return result.ok ? { address: result.value } : { addressError: result.error }
   })
 
-  // Duplicates (case-insensitive): flag every later occurrence and point to the first one.
   const firstSeen = new Map<string, number>()
   rows.forEach((r, i) => {
     if (!r.address) return

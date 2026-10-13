@@ -7,7 +7,6 @@ import { buttonSoft, ExternalLink, Panel } from './ui'
 type StepState = 'upcoming' | 'current' | 'done' | 'failed'
 const STEPS = ['Check', 'Sign', 'Pending', 'Confirmed'] as const
 
-/** Where each of the four steps stands for the current transaction state. */
 function stepStates(tx: TxState): StepState[] {
   const s = (done: number, current: StepState | null = null): StepState[] =>
     STEPS.map((_, i) => (i < done ? 'done' : i === done && current ? current : 'upcoming'))
@@ -30,7 +29,6 @@ function Stepper({ states }: { states: StepState[] }) {
         return (
           <li key={label} className="relative flex flex-1 flex-col items-center text-center">
             {i > 0 && (
-              // Connector from the previous circle to this one, leaving a gap around both circles.
               <span aria-hidden className={`absolute top-3.5 right-[calc(50%+1.5rem)] h-1 w-[calc(100%-3rem)] rounded-full ${states[i - 1] === 'done' ? 'bg-accent/70' : 'well-sm'}`} />
             )}
             <span

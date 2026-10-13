@@ -8,7 +8,6 @@ import { useAsyncData } from './useAsyncData'
 
 export type TxState =
   | { status: 'idle' }
-  /** Simulating the call (staticCall + estimateGas) before MetaMask is opened. */
   | { status: 'checking' }
   | { status: 'awaiting-signature' }
   | { status: 'pending'; hash: string }
@@ -16,13 +15,12 @@ export type TxState =
   | { status: 'failed'; hash?: string; message: string; beforeSending: boolean }
   | { status: 'rejected'; message: string }
 
-/** A transaction attempt from THIS browser session (kept apart from on-chain history). */
 export interface SessionTx {
   hash: string
   chainId: number
   status: 'pending' | 'confirmed' | 'failed'
   recipientCount: number
-  total: string // wei as string (sessionStorage can't hold bigint)
+  total: string
   time: number
   message?: string
 }
@@ -42,7 +40,6 @@ export function useSmartSplit(
   chainId: number | null,
   deployment: ContractDeployment | null,
 ) {
-  // The status belongs to the chain it was created on; switching network shows "idle" again.
   const [txEntry, setTxEntry] = useState<{ chainId: number | null; tx: TxState }>({ chainId, tx: { status: 'idle' } })
   const tx: TxState = txEntry.chainId === chainId ? txEntry.tx : { status: 'idle' }
   const setTx = useCallback((next: TxState) => setTxEntry({ chainId, tx: next }), [chainId])
@@ -59,7 +56,6 @@ export function useSmartSplit(
       try {
         sessionStorage.setItem(SESSION_KEY, JSON.stringify(next))
       } catch {
-        // storage unavailable — keep in memory only
       }
       return next
     })
@@ -72,7 +68,6 @@ export function useSmartSplit(
   const paymentCount = paymentCountData.value ?? null
   const refreshPaymentCount = paymentCountData.reload
 
-  // Current fee per gas, for the "not enough ETH for gas" warning.
   const loadGasPrice = useCallback(async () => {
     const fee = await provider!.getFeeData()
     return fee.maxFeePerGas ?? fee.gasPrice ?? null
@@ -81,9 +76,6 @@ export function useSmartSplit(
 
   const resetTx = useCallback(() => setTx({ status: 'idle' }), [setTx])
 
-  /**
-   * Send a split payment. Returns true only when the transaction is CONFIRMED on-chain.
-   */
   const sendPayment = useCallback(
     async (recipients: string[], amounts: bigint[]): Promise<boolean> => {
       if (!provider || !contract || chainId === null) return false
@@ -94,7 +86,6 @@ export function useSmartSplit(
         const signer = await provider.getSigner()
         const writable = contract.connect(signer) as Contract
 
-        // 1. Simulate first. If the contract would revert, explain why WITHOUT opening MetaMask.
         setTx({ status: 'checking' })
         try {
           await writable.splitPayment.staticCall(recipients, amounts, { value })
@@ -105,7 +96,6 @@ export function useSmartSplit(
           return false
         }
 
-        // 2. Ask MetaMask to sign and send.
         setTx({ status: 'awaiting-signature' })
         const response = await writable.splitPayment(recipients, amounts, { value })
         hash = response.hash as string
@@ -113,7 +103,6 @@ export function useSmartSplit(
         const base = { hash, chainId, recipientCount: recipients.length, total: value.toString(), time: Date.now() }
         upsertSessionTx({ ...base, status: 'pending' })
 
-        // 3. Wait for the block. Only a receipt with status 1 counts as confirmed.
         const receipt = await response.wait(1)
         if (!receipt || receipt.status !== 1) {
           const message = 'The transaction was mined but failed (reverted). No ETH was sent.'

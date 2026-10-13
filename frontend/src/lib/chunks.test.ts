@@ -23,7 +23,6 @@ describe('fetchInChunks', () => {
       if (to - from + 1 > 1000) throw { code: -32005, message: 'query returned more than 10000 results' }
       return []
     }, { chunkSize: 5000 })
-    // 5000 fail, 2500 fail, 1250 fail, then 625-block chunks succeed
     expect(calls.slice(0, 4)).toEqual([[0, 4999], [0, 2499], [0, 1249], [0, 624]])
     const covered = calls.filter(([f, t]) => t - f + 1 <= 1000)
     expect(covered[0][0]).toBe(0)

@@ -59,7 +59,7 @@ describe('validateAddress', () => {
   })
 
   it('rejects a mixed-case address with a bad checksum', () => {
-    const typo = A.replace('C51812dc', 'c51812dc') // flip the case of one letter
+    const typo = A.replace('C51812dc', 'c51812dc')
     const r = validateAddress(typo)
     expect(r.ok).toBe(false)
     expect(!r.ok && r.error).toMatch(/Checksum/)

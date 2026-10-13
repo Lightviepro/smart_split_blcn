@@ -1,10 +1,3 @@
-/**
- * End-to-end demo on the local Hardhat node: one transaction splits 0.03 ETH equally among
- * three recipients, and the script prints balances before/after to prove it.
- *
- *   Terminal 1: npm run node
- *   Terminal 2: npm run deploy:local && npm run demo:local
- */
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { network } from "hardhat";
@@ -27,8 +20,6 @@ const smartSplit = await ethers.getContractAt("SmartSplit", address);
 const [sender, ...others] = await ethers.getSigners();
 const recipients = others.slice(0, 3).map((s) => s.address);
 
-// Equal split in wei, using integer (bigint) maths only: the first `remainder` recipients get
-// one extra wei, so the amounts always add up to exactly `total`. Same rule as the frontend.
 const total = ethers.parseEther("0.03");
 const n = BigInt(recipients.length);
 const share = total / n;
@@ -64,7 +55,6 @@ console.table(
   })),
 );
 
-// Read the PaymentSplit event back out of the receipt.
 for (const log of receipt.logs) {
   const parsed = smartSplit.interface.parseLog(log);
   if (parsed?.name === "PaymentSplit") {
@@ -73,11 +63,10 @@ for (const log of receipt.logs) {
 }
 console.log(`paymentCount now: ${await smartSplit.paymentCount()}`);
 
-// Prove the maths — fail loudly if anything is off.
 const checks = [
   ...recipients.map((_, i) => after[i + 1] - before[i + 1] === amounts[i]),
-  before[0] - after[0] === total + gasCost, // sender paid exactly total + gas
-  after[4] === 0n, // contract kept nothing
+  before[0] - after[0] === total + gasCost,
+  after[4] === 0n,
 ];
 if (checks.every(Boolean)) {
   console.log("\n✅ Verified: each recipient received exactly their share, the sender paid exactly");

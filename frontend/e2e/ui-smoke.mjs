@@ -1,14 +1,3 @@
-// OPTIONAL headless-Chrome smoke test of the UI against the LOCAL Hardhat node.
-//
-// It is NOT a replacement for testing with real MetaMask (see docs/TEST_RESULTS.md checklist).
-// A tiny stand-in for MetaMask's window.ethereum forwards JSON-RPC to the local node, whose
-// built-in test accounts are unlocked, so eth_sendTransaction works with no private key here.
-//
-// Prereqs (3 terminals):  contracts-hardhat: npm run node  +  npm run deploy:local
-//                         frontend: npm run dev
-// Run:                    cd frontend && npm run e2e:local
-//   (installs puppeteer-core temporarily with --no-save; it is not a project dependency)
-// Chrome path: set CHROME_PATH if Chrome is not in the default macOS location.
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import { Contract, ContractFactory, formatEther, getAddress, JsonRpcProvider, parseEther } from 'ethers'
@@ -20,11 +9,10 @@ const APP = process.env.APP_URL ?? 'http://localhost:5173/'
 const SHOTS = process.env.SHOTS_DIR ?? path.join(ROOT, 'docs/images')
 const CHROME = process.env.CHROME_PATH ?? '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
 const rpc = new JsonRpcProvider(RPC)
-const accounts = (await rpc.send('eth_accounts', [])).map((a) => getAddress(a)) // node returns lowercase
+const accounts = (await rpc.send('eth_accounts', [])).map((a) => getAddress(a))
 const SENDER = accounts[5]
 const [R1, R2, R3] = [accounts[6], accounts[7], accounts[8]]
 
-// Deploy a recipient that rejects ETH, to exercise the "blocked before sending" path.
 const art = JSON.parse(readFileSync(path.join(ROOT, 'contracts-hardhat/artifacts/contracts/test-helpers/RejectingReceiver.sol/RejectingReceiver.json'), 'utf8'))
 const rejecting = await (await new ContractFactory(art.abi, art.bytecode, await rpc.getSigner(accounts[9])).deploy()).waitForDeployment()
 const REJECTING = await rejecting.getAddress()
@@ -65,7 +53,6 @@ const text = (page) => page.evaluate(() => document.body.innerText)
 const waitText = (page, s, timeout = 15000) => page.waitForFunction((t) => document.body.innerText.includes(t), { timeout }, s)
 
 try {
-  // 1. No MetaMask installed
   {
     const page = await browser.newPage()
     await page.goto(APP, { waitUntil: 'networkidle0' })
@@ -75,7 +62,6 @@ try {
     await page.close()
   }
 
-  // 2. Wrong network (mainnet chainId reported) — never auto-connects
   {
     const page = await browser.newPage()
     await page.evaluateOnNewDocument(mockEthereum, SENDER, RPC, '0x1')
@@ -89,7 +75,6 @@ try {
     await page.close()
   }
 
-  // 3. Main flow on Hardhat Local
   const page = await browser.newPage()
   await page.setViewport({ width: 1280, height: 900 })
   const pageErrors = []
@@ -115,7 +100,6 @@ try {
   const clickButton = async (label) => { const [b] = await page.$$(`xpath/.//button[contains(., "${label}")]`); await b.click() }
   const setValue = async (el, value) => { await el.click({ clickCount: 3 }); await el.press('Backspace'); await el.type(value) }
 
-  // Validation: duplicate (case-insensitive), own address, bad checksum
   await (await addrInputs())[0].type(R1)
   await clickButton('Add recipient')
   await (await addrInputs())[1].type(R1.toLowerCase())
@@ -129,13 +113,11 @@ try {
   await clickButton('Add recipient')
   await (await addrInputs())[2].type(R3)
 
-  // Equal split 0.03 ETH / 3
   await clickButton('Equal split')
   await page.type('#equal-total', '0.03')
   t = await text(page)
   check('Equal split shows 0.01 ETH per recipient', (t.match(/0\.01 ETH/g) ?? []).length >= 3)
 
-  // Review modal gate
   await clickButton('Review payment')
   await page.waitForSelector('[role="dialog"]')
   const confirmDisabled = await page.$eval('xpath/.//button[contains(., "Confirm in MetaMask")]', (b) => b.disabled)
@@ -150,7 +132,7 @@ try {
   await page.waitForSelector('[role="dialog"] input[type="checkbox"]')
   await page.click('[role="dialog"] input[type="checkbox"]')
 
-  const bal = async (a) => BigInt(await rpc.send('eth_getBalance', [a, 'latest'])) // uncached
+  const bal = async (a) => BigInt(await rpc.send('eth_getBalance', [a, 'latest']))
   const before = await Promise.all([R1, R2, R3].map(bal))
   await clickButton('Confirm in MetaMask')
   await waitText(page, 'Gas used', 20000)
@@ -167,7 +149,6 @@ try {
   check('"This session" list shows the confirmed tx', (await text(page)).includes('This session'))
   await page.screenshot({ path: `${SHOTS}/local-after-payment.png`, fullPage: true })
 
-  // Rejection in "MetaMask"
   await clickButton('Custom amounts')
   await (await addrInputs())[0].type(R1)
   await (await amountInputs())[0].type('0.001')
@@ -179,7 +160,6 @@ try {
   await waitText(page, 'You rejected the transaction in MetaMask. No ETH was sent.')
   check('User rejection shows the exact message', true)
 
-  // Contract revert caught BEFORE MetaMask opens (recipient rejects ETH -> TransferFailed)
   await setValue((await addrInputs())[0], REJECTING)
   await clickButton('Review payment')
   await page.waitForSelector('[role="dialog"] input[type="checkbox"]')
@@ -191,18 +171,15 @@ try {
   check('Preflight decodes TransferFailed into plain English', t.includes('refused the ETH') && t.includes('MetaMask was not opened'))
   check('No transaction was sent for the blocked payment', (await rpc.getTransactionCount(SENDER)) === nonceBefore)
 
-  // My payments filter
   await clickButton('My payments')
   await new Promise((r) => setTimeout(r, 500))
   const mine = await historyText()
-  // Compare with the chain: which payment IDs were really sent by SENDER?
   const abi = JSON.parse(readFileSync(path.join(ROOT, 'frontend/src/abi/SmartSplit.json'), 'utf8'))
   const events = await new Contract(cfg, abi, rpc).queryFilter('PaymentSplit', 0, 'latest')
   const mineIds = events.filter((e) => e.args.sender === SENDER).map((e) => Number(e.args.paymentId)).sort((a, b) => a - b)
   const shownIds = [...mine.matchAll(/Payment #(\d+)/g)].map((m) => Number(m[1])).sort((a, b) => a - b)
   check('"My payments" shows exactly this sender\'s payments', JSON.stringify(shownIds) === JSON.stringify(mineIds) && mineIds.includes(newestId), `shown ${shownIds} / on-chain ${mineIds}`)
 
-  // Mobile layout
   await page.setViewport({ width: 390, height: 844 })
   await page.screenshot({ path: `${SHOTS}/local-mobile.png`, fullPage: true })
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)

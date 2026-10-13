@@ -34,7 +34,6 @@ export default function App() {
     () => validateForm(form, { contractAddress: deployment?.address, senderAddress: wallet.account }),
     [form, deployment?.address, wallet.account],
   )
-  // Running total of whatever amounts are valid so far (for the summary while typing).
   const draftTotal = sumWei(validation.rows.flatMap((r) => (r.amount !== undefined ? [r.amount] : [])))
   const estimatedGasCost =
     smartSplit.gasPrice !== null ? estimateGasUpperBound(form.rows.length, wallet.chainId) * smartSplit.gasPrice : null

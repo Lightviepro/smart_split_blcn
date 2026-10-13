@@ -9,7 +9,6 @@ interface ImportMeta {
   readonly env: ImportMetaEnv
 }
 
-/** Minimal EIP-1193 provider injected by MetaMask. */
 interface EthereumProvider {
   isMetaMask?: boolean
   request(args: { method: string; params?: unknown[] | object }): Promise<unknown>

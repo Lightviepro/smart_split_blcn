@@ -17,10 +17,6 @@ export interface PaymentRecord {
 
 export type HistoryFilter = 'mine' | 'all'
 
-/**
- * Payment history read straight from the blockchain: every PaymentSplit event emitted by the
- * contract since its deployment block. There is no database — the event log IS the history.
- */
 export function usePaymentHistory(
   provider: BrowserProvider | null,
   contract: Contract | null,
@@ -34,10 +30,7 @@ export function usePaymentHistory(
   const key = enabled ? `${String(contract.target)}:${filter}:${filter === 'mine' ? account : ''}` : null
 
   const load = useCallback(async (): Promise<PaymentRecord[]> => {
-    // Ask the node directly (provider.send is uncached). ethers briefly caches getBlockNumber(),
-    // which could miss the block of a payment that was confirmed a moment ago.
     const latest = Number(await provider!.send('eth_blockNumber', []))
-    // `sender` is an indexed event parameter, so the node filters by it for us.
     const eventFilter =
       filter === 'mine' ? contract!.filters.PaymentSplit(null, account) : contract!.filters.PaymentSplit()
 
@@ -60,7 +53,7 @@ export function usePaymentHistory(
         txHash: log.transactionHash,
         blockNumber: log.blockNumber,
       }))
-      .reverse() // newest first
+      .reverse()
   }, [provider, contract, deployBlock, account, filter, key])
 
   const data = useAsyncData(key, load)

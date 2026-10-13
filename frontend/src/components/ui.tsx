@@ -1,7 +1,6 @@
 import { ArrowUpRight } from 'lucide-react'
 import type { ReactNode } from 'react'
 
-/** A floating white card. `step` shows a small numbered disc before the title (1, 2, 3 …). */
 export function Panel({
   title,
   step,
@@ -62,7 +61,6 @@ const DOT_TONES = {
   warn: 'bg-warn',
 } as const
 
-/** Small label with a coloured dot. */
 export function Chip({ tone = 'neutral', children, dot = true }: { tone?: keyof typeof CHIP_TONES; children: ReactNode; dot?: boolean }) {
   return (
     <span className={`well-sm inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${CHIP_TONES[tone]}`}>
@@ -87,7 +85,6 @@ export function ExternalLink({ href, children }: { href: string; children: React
   )
 }
 
-/** Segmented control: a recessed track with the active option floating above it. */
 export function Segmented<T extends string>({
   label,
   value,
@@ -125,21 +122,16 @@ export function Segmented<T extends string>({
   )
 }
 
-/** Main action: solid violet with a soft violet glow. */
 export const buttonPrimary =
   'focus-ring inline-flex items-center justify-center gap-2 rounded-full bg-accent px-5 py-2.5 text-sm font-bold text-white shadow-[0_10px_22px_-8px_rgb(106_69_217/0.6)] transition-all duration-150 hover:bg-accent-strong hover:shadow-[0_12px_26px_-8px_rgb(106_69_217/0.7)] active:translate-y-px disabled:cursor-not-allowed disabled:bg-surface-deep disabled:text-faint disabled:shadow-none'
 
-/** Secondary action: a small floating white pill. */
 export const buttonSoft =
   'focus-ring float-sm inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-semibold text-ink transition-all duration-150 hover:text-accent active:translate-y-px disabled:cursor-not-allowed disabled:text-faint disabled:shadow-none'
 
-/** Round icon-only button. */
 export const iconButton =
   'focus-ring float-sm grid h-8 w-8 shrink-0 place-items-center rounded-full text-muted transition-all duration-150 hover:text-ink active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50'
 
-/** Text input: a recessed field. Add `ring-1 ring-danger/60` when invalid. */
 export const inputBase =
   'well block w-full rounded-2xl border-0 px-4 py-2.5 text-sm text-ink outline-none transition-shadow placeholder:text-faint focus-visible:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:text-faint'
 
-/** Small uppercase label used above values. */
 export const eyebrow = 'text-[11px] font-bold uppercase tracking-[0.12em] text-muted'

@@ -1,11 +1,3 @@
-/**
- * Copy the SmartSplit ABI into the frontend and (optionally) register a deployed address.
- *
- * Typical use — after deploying from Remix:
- *   npm run export-abi -- --address 0xYourContract --block 1234567 --chain 11155111
- *
- * Without arguments it only refreshes frontend/src/abi/SmartSplit.json.
- */
 import { parseArgs } from "node:util";
 import { exportAbi, readRegistrations, registerContract } from "./lib/frontend-sync.ts";
 

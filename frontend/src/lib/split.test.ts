@@ -17,7 +17,6 @@ describe('equalSplit', () => {
   it('0.1 ETH / 7 -> first 2 recipients get 1 extra wei, sum is exact', () => {
     const total = parseEther('0.1')
     const parts = equalSplit(total, 7)
-    // 0.1 ETH = 100000000000000000 wei; / 7 = 14285714285714285 remainder 5
     const share = 14285714285714285n
     expect(total % 7n).toBe(5n)
     expect(parts).toEqual([share + 1n, share + 1n, share + 1n, share + 1n, share + 1n, share, share])

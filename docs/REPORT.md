@@ -4,7 +4,7 @@
 
 | | |
 |---|---|
-| Student | `<<STUDENT NAME>>` |
+| Student | Om Date |
 | Roll number | `<<ROLL NUMBER>>` |
 | Course / Lab | `<<COURSE NAME>>` |
 | Guide | `<<GUIDE NAME>>` |
@@ -141,7 +141,7 @@ for (uint256 i = 0; i < count; i++) {
     if (recipient == address(this)) revert ContractAsRecipient(i);
     if (recipient == msg.sender) revert SenderAsRecipient(i);
     if (amounts[i] == 0) revert ZeroAmount(i);
-    for (uint256 j = 0; j < i; j++) {               // O(n²), n ≤ 20 → ≤ 190 comparisons
+    for (uint256 j = 0; j < i; j++) {
         if (recipients[j] == recipient) revert DuplicateRecipient(recipient);
     }
     required += amounts[i];
@@ -154,9 +154,9 @@ Twelve **custom errors** carry structured data (for example, the index of the fa
 ### 7.3 Effects, interactions and event
 
 ```solidity
-uint256 paymentId = ++paymentCount;                       // effects
+uint256 paymentId = ++paymentCount;
 
-for (uint256 i = 0; i < count; i++) {                     // interactions
+for (uint256 i = 0; i < count; i++) {
     (bool ok, ) = recipients[i].call{value: amounts[i]}("");
     if (!ok) revert TransferFailed(recipients[i], amounts[i]);
 }

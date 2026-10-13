@@ -7,13 +7,11 @@ export type ErrorKind = 'rejected' | 'contract' | 'insufficient-funds' | 'unknow
 export interface FriendlyError {
   kind: ErrorKind
   message: string
-  /** Custom error name when the contract reverted with one, e.g. "DuplicateRecipient". */
   errorName?: string
 }
 
 export const REJECTED_MESSAGE = 'You rejected the transaction in MetaMask. No ETH was sent.'
 
-/** Plain-English messages for each SmartSplit custom error. Indexes are shown 1-based. */
 export function describeContractError(name: string, args: readonly unknown[]): string {
   const n = (v: unknown) => Number(v as bigint) + 1
   const eth = (v: unknown) => `${formatEthExact(v as bigint)} ETH`
@@ -50,7 +48,6 @@ export function describeContractError(name: string, args: readonly unknown[]): s
 type Obj = Record<string, unknown>
 const isObj = (v: unknown): v is Obj => typeof v === 'object' && v !== null
 
-/** Walk the nested error objects that ethers / MetaMask produce, depth-first. */
 function* walk(error: unknown, depth = 0): Generator<Obj> {
   if (!isObj(error) || depth > 6) return
   yield error
@@ -59,7 +56,6 @@ function* walk(error: unknown, depth = 0): Generator<Obj> {
   }
 }
 
-/** Find revert data (0x + 4-byte selector + args) anywhere inside the error. */
 function findRevertData(error: unknown): string | undefined {
   for (const e of walk(error)) {
     const data = e.data
@@ -84,14 +80,9 @@ function isInsufficientFunds(error: unknown): boolean {
   return false
 }
 
-/**
- * Turn any error thrown by ethers/MetaMask while sending a split into a message a person can
- * act on. Contract custom errors are decoded with the SmartSplit ABI.
- */
 export function toFriendlyError(error: unknown, iface: Interface = SMART_SPLIT_INTERFACE): FriendlyError {
   if (isUserRejection(error)) return { kind: 'rejected', message: REJECTED_MESSAGE }
 
-  // ethers v6 attaches the decoded custom error as `revert` when it knows the ABI.
   for (const e of walk(error)) {
     const revert = e.revert
     if (isObj(revert) && typeof revert.name === 'string' && Array.isArray(revert.args)) {
@@ -107,7 +98,6 @@ export function toFriendlyError(error: unknown, iface: Interface = SMART_SPLIT_I
         return { kind: 'contract', errorName: parsed.name, message: describeContractError(parsed.name, parsed.args) }
       }
     } catch {
-      // Not one of our errors; fall through.
     }
   }
 

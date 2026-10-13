@@ -6,7 +6,6 @@ import { buttonPrimary, buttonSoft, eyebrow, iconButton, inputBase, Panel, Segme
 interface Props {
   form: FormInput
   validation: FormValidation
-  /** Show errors on untouched/empty fields too (after the user tried to review). */
   showAllErrors: boolean
   disabled: boolean
   onChange: (form: FormInput) => void
@@ -36,7 +35,6 @@ export function PaymentForm({ form, validation, showAllErrors, disabled, onChang
     onChange({ ...form, rows: form.rows.map((r) => (r.id === id ? { ...r, ...patch } : r)) })
   const removeRow = (id: string) => onChange({ ...form, rows: form.rows.filter((r) => r.id !== id) })
 
-  // Only nag about a field once the user typed something, or after they pressed Review.
   const visible = (value: string, error?: string) => (showAllErrors || value.trim() !== '' ? error : undefined)
   const totalError = visible(form.equalTotal, validation.totalError)
   const n = form.rows.length
@@ -88,7 +86,6 @@ export function PaymentForm({ form, validation, showAllErrors, disabled, onChang
           )}
 
           <div className="space-y-2.5">
-            {/* Column headings (the inputs below also have screen-reader labels). */}
             <div aria-hidden className="hidden gap-3 sm:flex">
               <span className="w-8 shrink-0" />
               <div className={`grid flex-1 grid-cols-12 gap-2.5 pl-1 ${eyebrow}`}>

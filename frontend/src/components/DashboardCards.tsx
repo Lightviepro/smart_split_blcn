@@ -11,7 +11,6 @@ interface Props {
   paymentCount: bigint | null
 }
 
-// Engraved dividers: 2×2 grid on small screens, one row of four on large screens.
 const CELL_BORDERS = [
   '',
   'border-l',
@@ -30,7 +29,6 @@ function Stat({ label, index, children }: { label: string; index: number; childr
 
 const dash = <span className="font-medium text-faint">—</span>
 
-/** One raised strip with four readings, separated by hairlines. */
 export function DashboardCards({ balance, account, chainId, contractAddress, paymentCount }: Props) {
   const explorer = contractAddress ? addressUrl(chainId, contractAddress) : null
   return (

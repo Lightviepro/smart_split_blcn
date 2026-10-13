@@ -15,10 +15,6 @@ interface Props {
   onConfirm: () => void
 }
 
-/**
- * Final check before MetaMask opens. The user must tick the checkbox to confirm they have read
- * every full address — the safeguard against paying an unintended recipient.
- */
 export function ReviewModal(props: Props) {
   if (!props.open) return null
   return <ReviewDialog {...props} />
@@ -28,7 +24,6 @@ function ReviewDialog({ chainId, contractAddress, recipients, labels, amounts, t
   const [checked, setChecked] = useState(false)
   const dialogRef = useRef<HTMLDivElement>(null)
 
-  // Keyboard support: Escape closes, Tab stays inside the dialog, focus returns afterwards.
   useEffect(() => {
     const previouslyFocused = document.activeElement as HTMLElement | null
     const dialog = dialogRef.current

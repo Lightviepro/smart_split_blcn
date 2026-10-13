@@ -4,7 +4,6 @@ import { eyebrow, Panel } from './ui'
 
 interface Props {
   rowCount: number
-  /** Sum of every amount that is currently valid (shown even while other rows have errors). */
   draftTotal: bigint
   balance: bigint | null
   estimatedGasCost: bigint | null

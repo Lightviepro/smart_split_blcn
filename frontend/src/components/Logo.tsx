@@ -1,4 +1,3 @@
-/** Brand mark: one payment (left) splitting into three recipients (right). */
 export function Logo({ className = 'h-9 w-9' }: { className?: string }) {
   return (
     <svg viewBox="0 0 32 32" fill="none" aria-hidden className={className}>

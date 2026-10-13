@@ -5,12 +5,6 @@ interface ISmartSplit {
     function splitPayment(address[] calldata recipients, uint256[] calldata amounts) external payable;
 }
 
-/// @notice TEST HELPER ONLY — never deployed to Sepolia.
-/// @dev    A malicious-looking recipient: when it receives ETH, it immediately tries to call
-///         splitPayment again (re-entry), forwarding the ETH it just received to `reentryTarget`.
-///         The nested call is wrapped in try/catch so we can record *how* it failed, while the
-///         outer payment itself is allowed to complete. Documented behaviour: the re-entry is
-///         rejected with ReentrantCall(), and the outer payment succeeds normally.
 contract ReentrantReceiver {
     ISmartSplit public immutable smartSplit;
     address public immutable reentryTarget;

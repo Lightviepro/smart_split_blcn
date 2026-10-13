@@ -1,12 +1,3 @@
-/**
- * Fetch logs over a big block range in chunks.
- *
- * RPC providers (including MetaMask's default ones) refuse log queries over too many blocks.
- * We query `chunkSize` blocks at a time, and when the provider says the range is too large we
- * halve the chunk and retry, down to a single block.
- */
-
-/** Does this error look like an RPC "block range too large / too many results" error? */
 export function isRangeTooLargeError(error: unknown): boolean {
   const text = collectErrorText(error).toLowerCase()
   return /block range|range (is )?too (large|wide|big)|too many (blocks|results|logs)|exceed|query returned more than|limited to|max(imum)? block range|-32005|response size/.test(
@@ -26,7 +17,6 @@ function collectErrorText(error: unknown, depth = 0): string {
 
 export interface ChunkOptions {
   chunkSize: number
-  /** Called after each successful chunk with progress (0..1). */
   onProgress?: (fraction: number) => void
 }
 

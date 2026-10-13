@@ -4,7 +4,6 @@ import { network } from "hardhat";
 const { ethers, networkHelpers } = await network.create();
 const { parseEther } = ethers;
 
-/** Deterministic, distinct addresses that are not Hardhat signers (fresh balances of 0). */
 function makeAddresses(count: number): string[] {
   return Array.from({ length: count }, (_, i) =>
     ethers.getAddress(ethers.zeroPadValue(ethers.toBeHex(0x1000 + i), 20)),
@@ -251,8 +250,6 @@ describe("SmartSplit", function () {
       const rejecting = await ethers.deployContract("RejectingReceiver");
       const rejectingAddress = await rejecting.getAddress();
 
-      // The rejecting recipient is in the MIDDLE: alice is paid first, then the failure
-      // must undo alice's payment as well.
       const recipients = [alice.address, rejectingAddress, bob.address];
       const amounts = [1000n, 2000n, 3000n];
       const value = sum(amounts);
@@ -287,7 +284,6 @@ describe("SmartSplit", function () {
       ).to.changeEtherBalances(
         ethers,
         [alice, attackerAddress, bob, address],
-        // bob gets nothing: the re-entrant attempt to pay bob was rejected.
         [1000n, 5000n, 0n, 0n],
       );
 
@@ -295,7 +291,6 @@ describe("SmartSplit", function () {
       expect(await attacker.reentryBlocked()).to.equal(true);
       const selector = smartSplit.interface.getError("ReentrantCall")!.selector;
       expect(await attacker.reentryRevertData()).to.equal(selector);
-      // Only the outer payment was recorded.
       expect(await smartSplit.paymentCount()).to.equal(1n);
     });
   });
@@ -353,11 +348,8 @@ describe("SmartSplit", function () {
         );
         const amounts = recipients.map(() => parseEther("0.001"));
 
-        // First payment: recipients are brand-new empty accounts (the EVM charges an extra
-        // 25,000 gas per recipient to create each account).
         const freshTx = await smartSplit.splitPayment(recipients, amounts, { value: sum(amounts) });
         const freshReceipt = await freshTx.wait();
-        // Second payment to the same, now existing, accounts: the steady-state cost.
         const tx = await smartSplit.splitPayment(recipients, amounts, { value: sum(amounts) });
         const receipt = await tx.wait();
         rows.push({ recipients: n, gasUsed: receipt!.gasUsed });
@@ -367,7 +359,6 @@ describe("SmartSplit", function () {
         expect(receipt!.gasUsed).to.be.lessThan(1_000_000n);
       }
 
-      // Gas grows roughly linearly with the number of recipients.
       expect(rows[3].gasUsed).to.be.greaterThan(rows[0].gasUsed);
     });
   });

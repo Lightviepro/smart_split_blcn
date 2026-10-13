@@ -1,9 +1,3 @@
-/**
- * Deploy SmartSplit to the selected network and register it with the frontend.
- *
- *   npm run deploy:local     (needs `npm run node` running in another terminal)
- *   npm run deploy:sepolia   (needs SEPOLIA_RPC_URL + SEPOLIA_PRIVATE_KEY, see .env.example)
- */
 import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { network } from "hardhat";
@@ -25,7 +19,6 @@ const deployTx = smartSplit.deploymentTransaction();
 if (deployTx === null) throw new Error("No deployment transaction found");
 console.log(`Tx hash:  ${deployTx.hash} (waiting for confirmation...)`);
 
-// One confirmation is enough on a local chain; wait for two on a public testnet.
 const receipt = await deployTx.wait(chainId === 31337n ? 1 : 2);
 if (receipt === null || receipt.status !== 1) throw new Error("Deployment transaction failed");
 
