@@ -1,0 +1,23 @@
+# dependencies
+node_modules/
+
+# secrets
+.env
+.env.*
+!.env.example
+
+# hardhat
+contracts-hardhat/artifacts/
+contracts-hardhat/cache/
+contracts-hardhat/coverage/
+contracts-hardhat/types/
+contracts-hardhat/typechain-types/
+contracts-hardhat/deployments/hardhat.json
+
+# frontend
+frontend/dist/
+frontend/coverage/
+
+# misc
+.DS_Store
+*.log

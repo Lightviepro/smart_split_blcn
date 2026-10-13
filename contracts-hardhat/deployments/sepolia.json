@@ -1,0 +1,12 @@
+{
+  "network": "sepolia",
+  "chainId": 11155111,
+  "address": "0x3Ff9C193b1Bd228C76Cd4B1ffE36f3D2F97845fC",
+  "deployer": "0x051A5B07e73e368EaA1cfB645220daC6E3C6644f",
+  "txHash": "0x6c73c4302d7043720142bcd0287006742904aaaa95ce1990955ea72eb9460ec6",
+  "blockNumber": 11904281,
+  "gasUsed": "2875494",
+  "timestamp": "2026-10-13T06:28:36.000Z",
+  "deployedWith": "Remix IDE + MetaMask (Injected Provider)",
+  "verifiedOnChain": "receipt status 1, contractAddress and block match, runtime code identical to the Hardhat build (excluding metadata hash), paymentCount 0"
+}
