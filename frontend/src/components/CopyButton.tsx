@@ -6,17 +6,17 @@ export function CopyButton({ text, label = 'Copy address' }: { text: string; lab
   return (
     <button
       type="button"
-      aria-label={label}
-      title={label}
+      aria-label={copied ? 'Copied' : label}
+      title={copied ? 'Copied' : label}
       onClick={() => {
         void navigator.clipboard.writeText(text).then(() => {
           setCopied(true)
           setTimeout(() => setCopied(false), 1500)
         })
       }}
-      className="rounded p-1 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800 focus-visible:outline-2 focus-visible:outline-indigo-500"
+      className="focus-ring grid h-7 w-7 shrink-0 place-items-center rounded-full text-muted transition-colors hover:text-ink"
     >
-      {copied ? <Check aria-hidden className="h-4 w-4 text-emerald-600" /> : <Copy aria-hidden className="h-4 w-4" />}
+      {copied ? <Check aria-hidden className="h-3.5 w-3.5 text-accent" /> : <Copy aria-hidden className="h-3.5 w-3.5" />}
     </button>
   )
 }

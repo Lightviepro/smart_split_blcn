@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { addressUrl, chainName, formatEth, shortenAddress } from '../lib/format'
 import { CopyButton } from './CopyButton'
-import { ExternalLink } from './ui'
+import { eyebrow, ExternalLink } from './ui'
 
 interface Props {
   balance: bigint | null
@@ -11,26 +11,41 @@ interface Props {
   paymentCount: bigint | null
 }
 
-function Stat({ label, children }: { label: string; children: ReactNode }) {
+// Engraved dividers: 2×2 grid on small screens, one row of four on large screens.
+const CELL_BORDERS = [
+  '',
+  'border-l',
+  'border-t lg:border-t-0 lg:border-l',
+  'border-l border-t lg:border-t-0',
+]
+
+function Stat({ label, index, children }: { label: string; index: number; children: ReactNode }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-      <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</dt>
-      <dd className="mt-1 truncate text-lg font-semibold text-slate-900">{children}</dd>
+    <div className={`min-w-0 border-line px-5 py-4 sm:px-6 ${CELL_BORDERS[index]}`}>
+      <dt className={eyebrow}>{label}</dt>
+      <dd className="mt-1.5 truncate text-lg font-bold text-ink">{children}</dd>
     </div>
   )
 }
 
+const dash = <span className="font-medium text-faint">—</span>
+
+/** One raised strip with four readings, separated by hairlines. */
 export function DashboardCards({ balance, account, chainId, contractAddress, paymentCount }: Props) {
   const explorer = contractAddress ? addressUrl(chainId, contractAddress) : null
   return (
-    <dl className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-      <Stat label="Wallet balance">
-        {!account ? <span className="text-slate-400">Not connected</span> : balance === null ? '…' : `${formatEth(balance, 4)} ETH`}
+    <dl className="float grid grid-cols-2 overflow-hidden rounded-[26px] lg:grid-cols-4">
+      <Stat index={0} label="Your balance">
+        {!account ? <span className="text-base font-medium text-faint">Not connected</span> : balance === null ? '…' : (
+          <>
+            {formatEth(balance, 4)} <span className="text-sm font-semibold text-muted">ETH</span>
+          </>
+        )}
       </Stat>
-      <Stat label="Network">{chainId === null ? <span className="text-slate-400">—</span> : chainName(chainId)}</Stat>
-      <Stat label="Contract">
+      <Stat index={1} label="Network">{chainId === null ? dash : chainName(chainId)}</Stat>
+      <Stat index={2} label="Contract">
         {contractAddress ? (
-          <span className="flex items-center gap-1 text-base">
+          <span className="flex items-center gap-1 text-[15px]">
             {explorer ? (
               <ExternalLink href={explorer}>
                 <span className="font-mono">{shortenAddress(contractAddress)}</span>
@@ -41,10 +56,10 @@ export function DashboardCards({ balance, account, chainId, contractAddress, pay
             <CopyButton text={contractAddress} label="Copy contract address" />
           </span>
         ) : (
-          <span className="text-slate-400">—</span>
+          dash
         )}
       </Stat>
-      <Stat label="Total payments (on-chain)">{paymentCount === null ? <span className="text-slate-400">—</span> : paymentCount.toString()}</Stat>
+      <Stat index={3} label="Payments on-chain">{paymentCount === null ? dash : paymentCount.toString()}</Stat>
     </dl>
   )
 }

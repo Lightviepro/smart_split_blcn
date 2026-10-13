@@ -11,13 +11,13 @@
 // Chrome path: set CHROME_PATH if Chrome is not in the default macOS location.
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
-import { ContractFactory, formatEther, getAddress, JsonRpcProvider, parseEther } from 'ethers'
+import { Contract, ContractFactory, formatEther, getAddress, JsonRpcProvider, parseEther } from 'ethers'
 import puppeteer from 'puppeteer-core'
 
 const ROOT = path.resolve(import.meta.dirname, '..', '..')
 const RPC = 'http://127.0.0.1:8545'
 const APP = process.env.APP_URL ?? 'http://localhost:5173/'
-const SHOTS = path.join(ROOT, 'docs/images')
+const SHOTS = process.env.SHOTS_DIR ?? path.join(ROOT, 'docs/images')
 const CHROME = process.env.CHROME_PATH ?? '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
 const rpc = new JsonRpcProvider(RPC)
 const accounts = (await rpc.send('eth_accounts', [])).map((a) => getAddress(a)) // node returns lowercase
@@ -71,7 +71,7 @@ try {
     await page.goto(APP, { waitUntil: 'networkidle0' })
     const t = await text(page)
     check('No wallet: shows "MetaMask is required" + install link', t.includes('MetaMask is required') && t.includes('Install MetaMask'))
-    check('No wallet: "Testnet only — no real money" badge', t.includes('Testnet only — no real money'))
+    check('No wallet: "Testnet only — no real money" badge', t.toLowerCase().includes('testnet only — no real money'))
     await page.close()
   }
 
@@ -195,7 +195,12 @@ try {
   await clickButton('My payments')
   await new Promise((r) => setTimeout(r, 500))
   const mine = await historyText()
-  check('"My payments" shows only this sender\'s payments', mine.includes(`Payment #${newestId}`) && !/Payment #1\b/.test(mine) && !/Payment #2\b/.test(mine))
+  // Compare with the chain: which payment IDs were really sent by SENDER?
+  const abi = JSON.parse(readFileSync(path.join(ROOT, 'frontend/src/abi/SmartSplit.json'), 'utf8'))
+  const events = await new Contract(cfg, abi, rpc).queryFilter('PaymentSplit', 0, 'latest')
+  const mineIds = events.filter((e) => e.args.sender === SENDER).map((e) => Number(e.args.paymentId)).sort((a, b) => a - b)
+  const shownIds = [...mine.matchAll(/Payment #(\d+)/g)].map((m) => Number(m[1])).sort((a, b) => a - b)
+  check('"My payments" shows exactly this sender\'s payments', JSON.stringify(shownIds) === JSON.stringify(mineIds) && mineIds.includes(newestId), `shown ${shownIds} / on-chain ${mineIds}`)
 
   // Mobile layout
   await page.setViewport({ width: 390, height: 844 })

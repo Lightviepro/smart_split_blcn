@@ -1,8 +1,8 @@
-import { Split, Wallet } from 'lucide-react'
 import { isSupportedChain } from '../config/chains'
 import { chainName, shortenAddress } from '../lib/format'
 import { CopyButton } from './CopyButton'
-import { Badge, buttonPrimary } from './ui'
+import { Logo } from './Logo'
+import { buttonPrimary, Chip } from './ui'
 
 interface HeaderProps {
   hasWallet: boolean
@@ -14,40 +14,36 @@ interface HeaderProps {
 
 export function Header({ hasWallet, account, chainId, connecting, onConnect }: HeaderProps) {
   return (
-    <header className="border-b border-slate-200 bg-white">
-      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-4">
-        <div className="flex items-center gap-3">
-          <div className="rounded-lg bg-indigo-600 p-2 text-white">
-            <Split aria-hidden className="h-5 w-5" />
-          </div>
-          <div>
-            <h1 className="text-lg font-bold leading-tight text-slate-900">Smart Split</h1>
-            <p className="text-xs text-slate-500">Split one ETH payment among many people, in one transaction</p>
-          </div>
-          <Badge tone="amber">Testnet only — no real money</Badge>
+    <header className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 pt-6 pb-2 sm:px-6">
+      <div className="flex items-center gap-3">
+        <div className="float-sm grid h-12 w-12 place-items-center rounded-2xl">
+          <Logo />
         </div>
+        <div>
+          <h1 className="text-xl font-extrabold leading-none tracking-tight text-ink">Smart Split</h1>
+          <p className="mt-1 text-[13px] text-muted">One payment, many recipients, one transaction.</p>
+        </div>
+      </div>
 
-        <div className="flex items-center gap-2">
-          {chainId !== null && (
-            <Badge tone={isSupportedChain(chainId) ? 'green' : 'red'}>
-              <span aria-hidden className={`h-1.5 w-1.5 rounded-full ${isSupportedChain(chainId) ? 'bg-emerald-500' : 'bg-red-500'}`} />
-              {chainName(chainId)}
-            </Badge>
-          )}
-          {hasWallet &&
-            (account ? (
-              <div className="flex items-center gap-1 rounded-lg bg-slate-100 py-1 pl-3 pr-1 text-sm font-medium text-slate-800">
-                <Wallet aria-hidden className="h-4 w-4 text-slate-500" />
-                <span title={account} className="font-mono">{shortenAddress(account)}</span>
-                <CopyButton text={account} />
-              </div>
-            ) : (
-              <button type="button" className={buttonPrimary} onClick={onConnect} disabled={connecting}>
-                <Wallet aria-hidden className="h-4 w-4" />
-                {connecting ? 'Connecting…' : 'Connect MetaMask'}
-              </button>
-            ))}
-        </div>
+      <div className="flex flex-wrap items-center gap-3">
+        <span className="font-mono text-[11px] font-medium uppercase tracking-wider text-warn">Testnet only — no real money</span>
+        {chainId !== null && (
+          <Chip tone={isSupportedChain(chainId) ? 'success' : 'danger'}>{chainName(chainId)}</Chip>
+        )}
+        {hasWallet &&
+          (account ? (
+            <div className="float-sm flex items-center gap-1 rounded-full py-1 pl-4 pr-1.5">
+              <span className="sr-only">Connected account</span>
+              <span title={account} className="font-mono text-[13px] font-medium text-ink">
+                {shortenAddress(account)}
+              </span>
+              <CopyButton text={account} />
+            </div>
+          ) : (
+            <button type="button" className={buttonPrimary} onClick={onConnect} disabled={connecting}>
+              {connecting ? 'Connecting…' : 'Connect MetaMask'}
+            </button>
+          ))}
       </div>
     </header>
   )

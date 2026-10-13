@@ -1,1 +1,103 @@
 @import "tailwindcss";
+
+/*
+ * Smart Split — "lavender float" design system.
+ *
+ * The page is a lavender wash that is strongest at the edges and fades to near-white in the
+ * centre. Content sits on soft white cards that seem to hover above it: each card has a white
+ * glow around it (the "white shadow") plus a faint violet shadow underneath for lift.
+ *   float = a hovering white card     well = a recessed area (inputs, read-outs)
+ */
+@theme {
+  --font-sans: "Manrope Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --color-surface: #fdfcff;        /* card white, a hint of violet */
+  --color-surface-deep: #f3effd;   /* recessed areas inside cards */
+  --color-line: #ece6fb;           /* hairlines inside cards */
+  --color-line-strong: #d7ccf5;    /* input borders, emphasised dividers */
+  --color-ink: #211a38;
+  --color-muted: #5d5677;
+  --color-faint: #8a84a2;
+  --color-accent: #6a45d9;
+  --color-accent-strong: #5634bd;
+  --color-accent-soft: #ece5ff;
+  --color-success: #16794c;
+  --color-success-soft: #e1f4ea;
+  --color-danger: #b02a37;
+  --color-danger-soft: #fbe6e8;
+  --color-warn: #8a5800;
+  --color-warn-soft: #fbf0d9;
+}
+
+/* Hovering white card: white halo + soft violet drop shadow. */
+@utility float {
+  background-color: color-mix(in srgb, var(--color-surface) 88%, transparent);
+  backdrop-filter: blur(10px);
+  box-shadow:
+    0 0 0 1px rgb(255 255 255 / 0.9),
+    0 0 36px 6px rgb(255 255 255 / 0.85),
+    0 22px 45px -18px rgb(84 56 170 / 0.28),
+    0 2px 6px rgb(84 56 170 / 0.06);
+}
+
+/* Smaller hovering element (buttons, list rows, chips on cards). */
+@utility float-sm {
+  background-color: var(--color-surface);
+  box-shadow:
+    0 0 0 1px var(--color-line),
+    0 0 14px 2px rgb(255 255 255 / 0.9),
+    0 8px 18px -10px rgb(84 56 170 / 0.3);
+}
+
+/* Recessed area: tinted fill with a fine border. */
+@utility well {
+  background-color: var(--color-surface-deep);
+  box-shadow: inset 0 0 0 1px var(--color-line), inset 0 1px 3px rgb(84 56 170 / 0.06);
+}
+
+@utility well-sm {
+  background-color: var(--color-surface-deep);
+  box-shadow: inset 0 0 0 1px var(--color-line);
+}
+
+@utility focus-ring {
+  &:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 3px;
+  }
+}
+
+@layer base {
+  html {
+    color: var(--color-ink);
+    -webkit-font-smoothing: antialiased;
+    background-color: #e2d7fb;
+  }
+  /* Lavender at the edges, fading to near-white in the centre. Drawn on a fixed layer behind
+     the page (more reliable than background-attachment: fixed, which iOS ignores). */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-image:
+      radial-gradient(ellipse 65% 58% at 50% 45%, #fcfbff 0%, #f5f1ff 38%, rgb(245 241 255 / 0) 78%),
+      radial-gradient(ellipse 125% 105% at 50% 50%, #ebe3fe 0%, #dfd2fb 58%, #d0bdf5 100%);
+  }
+  body {
+    font-family: var(--font-sans);
+    font-feature-settings: "tnum" 1; /* aligned digits for amounts */
+  }
+  ::selection {
+    background-color: var(--color-accent-soft);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition-duration: 0ms !important;
+    animation-duration: 0ms !important;
+  }
+}

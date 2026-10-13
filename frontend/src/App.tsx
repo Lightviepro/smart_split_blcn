@@ -64,7 +64,7 @@ export default function App() {
   const supported = isSupportedChain(chainId)
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
+    <div className="min-h-screen text-ink">
       <Header
         hasWallet={wallet.hasWallet}
         account={wallet.account}
@@ -73,10 +73,10 @@ export default function App() {
         onConnect={() => void wallet.connect()}
       />
 
-      <main className="mx-auto max-w-6xl space-y-6 px-4 py-6">
+      <main className="mx-auto max-w-6xl space-y-7 px-4 py-6 sm:px-6">
         {!wallet.hasWallet && <InstallMetaMask />}
         {wallet.error && (
-          <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-800">
+          <p role="alert" className="rounded-2xl bg-danger-soft px-4 py-3 text-sm font-medium text-danger">
             {wallet.error}
           </p>
         )}
@@ -96,11 +96,11 @@ export default function App() {
         {supported && deployment !== null && (
           <>
             {!wallet.account && (
-              <p className="rounded-lg bg-indigo-50 p-3 text-sm text-indigo-900">
+              <p className="well rounded-2xl px-5 py-3 text-sm text-muted">
                 Connect MetaMask (top right) to send a payment. You can still browse the payment history below.
               </p>
             )}
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
+            <div className="grid grid-cols-1 gap-7 lg:grid-cols-5 lg:grid-rows-[auto_1fr] lg:items-start">
               <div className="lg:col-span-3">
                 <PaymentForm
                   form={form}
@@ -112,29 +112,30 @@ export default function App() {
                   onReview={onReview}
                 />
               </div>
-              <div className="space-y-6 lg:col-span-2">
-                <TxStatusPanel tx={smartSplit.tx} chainId={chainId} onReset={smartSplit.resetTx} />
+              <div className="space-y-7 lg:sticky lg:top-6 lg:col-span-2 lg:row-span-2">
                 <PaymentSummary
                   rowCount={form.rows.length}
                   draftTotal={draftTotal}
                   balance={wallet.balance}
                   estimatedGasCost={estimatedGasCost}
                 />
+                <TxStatusPanel tx={smartSplit.tx} chainId={chainId} onReset={smartSplit.resetTx} />
+              </div>
+              <div className="lg:col-span-3">
+                <HistoryPanel
+                  chainId={chainId}
+                  account={wallet.account}
+                  filter={historyFilter}
+                  onFilterChange={setHistoryFilter}
+                  records={history.records}
+                  loading={history.loading}
+                  progress={history.progress}
+                  error={history.error}
+                  onRefresh={history.refresh}
+                  sessionTxs={smartSplit.sessionTxs}
+                />
               </div>
             </div>
-
-            <HistoryPanel
-              chainId={chainId}
-              account={wallet.account}
-              filter={historyFilter}
-              onFilterChange={setHistoryFilter}
-              records={history.records}
-              loading={history.loading}
-              progress={history.progress}
-              error={history.error}
-              onRefresh={history.refresh}
-              sessionTxs={smartSplit.sessionTxs}
-            />
 
             <ReviewModal
               open={reviewOpen}
@@ -151,8 +152,8 @@ export default function App() {
         )}
       </main>
 
-      <footer className="mx-auto max-w-6xl px-4 pb-8 text-center text-xs text-slate-500">
-        Smart Split · Blockchain Lab project · Runs on the Sepolia testnet. Test ETH has no real-world value.
+      <footer className="mx-auto max-w-6xl px-4 pt-4 pb-10 text-center text-xs text-muted sm:px-6">
+        Block Chain Lab Project, Created by Om · 13 October 2026
       </footer>
     </div>
   )

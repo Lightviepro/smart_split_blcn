@@ -1,30 +1,83 @@
-import { CheckCircle2, CircleDashed, Loader2, PenLine, ShieldX, XCircle } from 'lucide-react'
+import { Check, X } from 'lucide-react'
 import type { ReactNode } from 'react'
 import type { TxState } from '../hooks/useSmartSplit'
 import { txUrl } from '../lib/format'
-import { buttonSecondary, Card, ExternalLink } from './ui'
+import { buttonSoft, ExternalLink, Panel } from './ui'
+
+type StepState = 'upcoming' | 'current' | 'done' | 'failed'
+const STEPS = ['Check', 'Sign', 'Pending', 'Confirmed'] as const
+
+/** Where each of the four steps stands for the current transaction state. */
+function stepStates(tx: TxState): StepState[] {
+  const s = (done: number, current: StepState | null = null): StepState[] =>
+    STEPS.map((_, i) => (i < done ? 'done' : i === done && current ? current : 'upcoming'))
+  switch (tx.status) {
+    case 'idle': return s(0)
+    case 'checking': return s(0, 'current')
+    case 'awaiting-signature': return s(1, 'current')
+    case 'pending': return s(2, 'current')
+    case 'confirmed': return s(4)
+    case 'rejected': return s(1, 'failed')
+    case 'failed': return tx.beforeSending ? s(0, 'failed') : tx.hash ? s(2, 'failed') : s(1, 'failed')
+  }
+}
+
+function Stepper({ states }: { states: StepState[] }) {
+  return (
+    <ol className="flex items-start" aria-label="Payment progress">
+      {STEPS.map((label, i) => {
+        const st = states[i]
+        return (
+          <li key={label} className="relative flex flex-1 flex-col items-center text-center">
+            {i > 0 && (
+              // Connector from the previous circle to this one, leaving a gap around both circles.
+              <span aria-hidden className={`absolute top-3.5 right-[calc(50%+1.5rem)] h-1 w-[calc(100%-3rem)] rounded-full ${states[i - 1] === 'done' ? 'bg-accent/70' : 'well-sm'}`} />
+            )}
+            <span
+              className={`relative grid h-8 w-8 place-items-center rounded-full text-xs font-bold transition-colors duration-150 ${
+                st === 'done'
+                  ? 'bg-accent text-white shadow-[0_6px_14px_-6px_rgb(106_69_217/0.7)]'
+                  : st === 'failed'
+                    ? 'bg-danger text-white shadow-[0_6px_14px_-6px_rgb(176_42_55/0.6)]'
+                    : st === 'current'
+                      ? 'float-sm text-accent ring-2 ring-accent/60'
+                      : 'well-sm text-faint'
+              }`}
+            >
+              {st === 'done' ? <Check aria-hidden className="h-4 w-4" /> : st === 'failed' ? <X aria-hidden className="h-4 w-4" /> : (
+                <span className={st === 'current' ? 'h-2 w-2 animate-pulse rounded-full bg-accent' : 'font-mono'}>{st === 'current' ? '' : i + 1}</span>
+              )}
+            </span>
+            <span className={`mt-2 text-[11px] font-bold uppercase tracking-wider ${st === 'upcoming' ? 'text-faint' : st === 'failed' ? 'text-danger' : 'text-ink'}`}>
+              {label}
+              <span className="sr-only"> — {st}</span>
+            </span>
+          </li>
+        )
+      })}
+    </ol>
+  )
+}
 
 function TxHash({ chainId, hash }: { chainId: number; hash: string }) {
   const url = txUrl(chainId, hash)
   return (
-    <div className="mt-2 text-xs">
-      <div className="text-slate-500">Transaction hash</div>
-      <div className="break-all font-mono text-slate-800">{hash}</div>
-      <div className="mt-1">
-        {url ? <ExternalLink href={url}>View on Etherscan</ExternalLink> : <span className="text-slate-500">Local network — no explorer</span>}
+    <div className="well mt-3 rounded-2xl px-4 py-3 text-xs">
+      <div className="font-bold uppercase tracking-wider text-muted">Transaction hash</div>
+      <div className="mt-1 break-all font-mono text-[12px] text-ink">{hash}</div>
+      <div className="mt-2">
+        {url ? <ExternalLink href={url}>View on Etherscan</ExternalLink> : <span className="text-muted">Local network — no explorer</span>}
       </div>
     </div>
   )
 }
 
-function Row({ icon, title, tone, children }: { icon: ReactNode; title: string; tone: string; children?: ReactNode }) {
+function Message({ title, tone = 'ink', children }: { title: string; tone?: 'ink' | 'accent' | 'success' | 'danger' | 'warn'; children?: ReactNode }) {
+  const color = { ink: 'text-ink', accent: 'text-accent', success: 'text-success', danger: 'text-danger', warn: 'text-warn' }[tone]
   return (
-    <div className={`rounded-lg p-3 ${tone}`}>
-      <div className="flex items-center gap-2 font-semibold">
-        {icon}
-        {title}
-      </div>
-      {children && <div className="mt-1 text-sm [overflow-wrap:anywhere]">{children}</div>}
+    <div className="mt-6 [overflow-wrap:anywhere]">
+      <p className={`font-bold ${color}`}>{title}</p>
+      {children && <div className="mt-1 text-sm text-muted">{children}</div>}
     </div>
   )
 }
@@ -32,49 +85,43 @@ function Row({ icon, title, tone, children }: { icon: ReactNode; title: string; 
 export function TxStatusPanel({ tx, chainId, onReset }: { tx: TxState; chainId: number; onReset: () => void }) {
   const done = tx.status === 'confirmed' || tx.status === 'failed' || tx.status === 'rejected'
   return (
-    <Card title="Transaction status" actions={done && <button type="button" className={buttonSecondary} onClick={onReset}>Clear</button>}>
+    <Panel
+      step={3}
+      title="Track the payment"
+      labelledBy="status-title"
+      actions={done && <button type="button" className={buttonSoft} onClick={onReset}>Clear</button>}
+    >
+      <Stepper states={stepStates(tx)} />
       <div aria-live="polite">
-        {tx.status === 'idle' && (
-          <Row icon={<CircleDashed aria-hidden className="h-5 w-5" />} title="Idle" tone="bg-slate-50 text-slate-600">
-            Fill in the form and press “Review payment”.
-          </Row>
-        )}
+        {tx.status === 'idle' && <Message title="Idle">Fill in the form and press “Review payment”.</Message>}
         {tx.status === 'checking' && (
-          <Row icon={<Loader2 aria-hidden className="h-5 w-5 animate-spin" />} title="Checking the payment…" tone="bg-slate-50 text-slate-700">
-            Simulating the transaction to catch errors before MetaMask opens.
-          </Row>
+          <Message title="Checking the payment…">Simulating the transaction to catch errors before MetaMask opens.</Message>
         )}
         {tx.status === 'awaiting-signature' && (
-          <Row icon={<PenLine aria-hidden className="h-5 w-5" />} title="Waiting for your signature" tone="bg-indigo-50 text-indigo-900">
-            Confirm the transaction in the MetaMask window.
-          </Row>
+          <Message title="Waiting for your signature" tone="accent">Confirm the transaction in the MetaMask window.</Message>
         )}
         {tx.status === 'pending' && (
-          <Row icon={<Loader2 aria-hidden className="h-5 w-5 animate-spin" />} title="Pending — waiting for a block" tone="bg-amber-50 text-amber-900">
+          <Message title="Pending — waiting for a block" tone="warn">
             Sent to the network. Not confirmed yet.
             <TxHash chainId={chainId} hash={tx.hash} />
-          </Row>
+          </Message>
         )}
         {tx.status === 'confirmed' && (
-          <Row icon={<CheckCircle2 aria-hidden className="h-5 w-5" />} title="Confirmed" tone="bg-emerald-50 text-emerald-900">
+          <Message title="Confirmed" tone="success">
             {tx.paymentId !== null && <>Payment #{tx.paymentId.toString()} · </>}
             Block {tx.blockNumber} · Gas used {tx.gasUsed.toLocaleString()}
             <TxHash chainId={chainId} hash={tx.hash} />
-          </Row>
+          </Message>
         )}
         {tx.status === 'failed' && (
-          <Row icon={<XCircle aria-hidden className="h-5 w-5" />} title={tx.beforeSending ? 'Blocked before sending' : 'Failed'} tone="bg-red-50 text-red-900">
+          <Message title={tx.beforeSending ? 'Blocked before sending' : 'Failed'} tone="danger">
             {tx.message}
             {tx.beforeSending && <p className="mt-1 text-xs">MetaMask was not opened and no ETH was sent.</p>}
             {tx.hash && <TxHash chainId={chainId} hash={tx.hash} />}
-          </Row>
+          </Message>
         )}
-        {tx.status === 'rejected' && (
-          <Row icon={<ShieldX aria-hidden className="h-5 w-5" />} title="Rejected" tone="bg-slate-100 text-slate-800">
-            {tx.message}
-          </Row>
-        )}
+        {tx.status === 'rejected' && <Message title="Rejected" tone="danger">{tx.message}</Message>}
       </div>
-    </Card>
+    </Panel>
   )
 }
