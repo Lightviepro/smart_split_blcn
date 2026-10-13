@@ -153,7 +153,7 @@ export default function App() {
       </main>
 
       <footer className="mx-auto max-w-6xl px-4 pt-4 pb-10 text-center text-xs text-muted sm:px-6">
-        Block Chain Lab Project, Created by Om · 13 October 2026
+        Block Chain Lab Project, Created by Om Date
       </footer>
     </div>
   )
